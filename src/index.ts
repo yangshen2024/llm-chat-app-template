@@ -13,7 +13,7 @@ import { Env, ChatMessage } from "./types";
 // https://developers.cloudflare.com/workers-ai/models/
 const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
-// Default system prompt
+// Default system prompt test
 const SYSTEM_PROMPT =
   "You are a helpful, friendly assistant. Provide concise and accurate responses.";
 
