@@ -58,9 +58,15 @@ async function handleChatRequest(
 ): Promise<Response> {
   try {
     // Parse JSON request body
-    const { messages = [] } = (await request.json()) as {
-      messages: ChatMessage[];
-    };
+    const body = await request.json() as { messages?: ChatMessage[]; model?: string };
+    if (body.model && body.model !== MODEL_ID) {
+      return Response.json({ error: "Unsupported model" }, { status: 400 });
+    }
+    if (!Array.isArray(body.messages) || !body.messages.length || body.messages.length > 100 ||
+        body.messages.some(m => !m || !["user", "assistant"].includes(m.role) || typeof m.content !== "string" || !m.content.trim() || m.content.length > 16000)) {
+      return Response.json({ error: "Invalid messages" }, { status: 400 });
+    }
+    const messages: ChatMessage[] = [...body.messages];
 
     // Add system prompt if not present
     if (!messages.some((msg) => msg.role === "system")) {
@@ -72,6 +78,7 @@ async function handleChatRequest(
       {
         messages,
         max_tokens: 1024,
+        stream: true,
       },
       {
         returnRawResponse: true,
@@ -91,7 +98,7 @@ async function handleChatRequest(
     return new Response(
       JSON.stringify({ error: "Failed to process request" }),
       {
-        status: 500,
+        status: error instanceof SyntaxError ? 400 : 500,
         headers: { "content-type": "application/json" },
       },
     );
